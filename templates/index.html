@@ -1,0 +1,84 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#080b19">
+
+    <title>Password Strength Analyzer</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <main class="container">
+
+        <div class="security-icon" aria-hidden="true">🛡️</div>
+
+        <p class="eyebrow">CYBERSECURITY TOOL</p>
+
+        <h1>Password Strength Analyzer</h1>
+
+        <p class="subtitle">
+            Test your password. Strengthen your security.
+        </p>
+
+        <label for="password">Enter a password</label>
+
+        <div class="password-wrapper">
+            <input
+                type="password"
+                id="password"
+                placeholder="Enter a sample password"
+                autocomplete="off"
+                spellcheck="false"
+            >
+
+            <button
+                type="button"
+                id="togglePassword"
+                class="toggle-button"
+                aria-label="Show password"
+                aria-pressed="false"
+            >Show</button>
+        </div>
+
+        <button type="button" id="checkButton" class="analyze-button">
+            Analyze Password
+        </button>
+
+        <section class="result-section" aria-live="polite">
+            <div id="result">Your strength will appear here</div>
+
+            <div
+                class="strength-bar"
+                id="strengthBar"
+                role="progressbar"
+                aria-label="Password strength"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0"
+            >
+                <div id="strengthFill"></div>
+            </div>
+        </section>
+
+        <section class="checklist">
+            <h2>Password requirements</h2>
+            <ul id="suggestions">
+                <li>Enter a sample password to see suggestions.</li>
+            </ul>
+        </section>
+
+        <p class="privacy-note">
+            🔒 Password checks run in your browser.
+            Never test with a password you actually use.
+        </p>
+
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+</body>
+</html>
