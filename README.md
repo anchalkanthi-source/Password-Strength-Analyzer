@@ -8,6 +8,10 @@ The Password Strength Analyzer checks a sample password against five basic crite
 
 This project was built to explore cybersecurity fundamentals and web development.
 
+## 📸 Application Preview
+
+![Password Strength Analyzer screenshot](./screenshot.png)
+
 ## ✨ Features
 
 - 🔐 Analyze password strength.
