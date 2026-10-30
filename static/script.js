@@ -9,7 +9,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const strengthFill = document.getElementById("strengthFill");
     const strengthBar = document.getElementById("strengthBar");
 
-    // Check that all required HTML elements exist
     if (
         !passwordInput ||
         !checkButton ||
@@ -23,12 +22,19 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
     }
 
-    // Show or hide the password
+    // Common passwords
+    const commonPasswords = [
+        "password", "123456", "12345678", "qwerty",
+        "admin", "welcome", "hello", "letmein",
+        "iloveyou", "monkey", "dragon", "sunshine",
+        "football", "abc123"
+    ];
+
+    // Show or hide password
     togglePassword.addEventListener("click", function () {
         const passwordIsHidden = passwordInput.type === "password";
 
         passwordInput.type = passwordIsHidden ? "text" : "password";
-
         togglePassword.textContent = passwordIsHidden ? "Hide" : "Show";
 
         togglePassword.setAttribute(
@@ -42,6 +48,49 @@ document.addEventListener("DOMContentLoaded", function () {
         );
     });
 
+    // Check for common or predictable passwords
+    function isPredictable(password) {
+        const normalized = password.toLowerCase();
+
+        // Exact common passwords
+        if (commonPasswords.includes(normalized)) {
+            return true;
+        }
+
+        // Common password followed by simple numbers or symbols
+        const commonBase = commonPasswords.some(word => {
+            const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            const pattern = new RegExp(
+                "^" + escapedWord + "[!@#$%^&*._-]*[0-9]+$",
+                "i"
+            );
+
+            return pattern.test(password);
+        });
+
+        if (commonBase) {
+            return true;
+        }
+
+        // Repeated characters, such as aaaaa or 111111
+        if (/(.)\1{3,}/.test(password)) {
+            return true;
+        }
+
+        // Simple keyboard and number sequences
+        const sequences = [
+            "1234", "2345", "3456", "4567",
+            "5678", "6789", "abcd", "bcde",
+            "cdef", "qwerty", "asdf"
+        ];
+
+        if (sequences.some(sequence => normalized.includes(sequence))) {
+            return true;
+        }
+
+        return false;
+    }
+
     // Analyze password strength
     checkButton.addEventListener("click", function () {
         const password = passwordInput.value;
@@ -49,65 +98,97 @@ document.addEventListener("DOMContentLoaded", function () {
         let score = 0;
         const tips = [];
 
-        // Length check
+        if (password.length === 0) {
+            result.textContent = "Please enter a password.";
+            result.style.color = "#ef4444";
+
+            strengthFill.style.width = "0%";
+            strengthBar.setAttribute("aria-valuenow", "0");
+
+            suggestions.replaceChildren();
+            addSuggestion("Enter a sample password to see suggestions.");
+            return;
+        }
+
+        // Length checks
         if (password.length >= 8) {
             score++;
         } else {
             tips.push("Use at least 8 characters.");
         }
 
-        // Uppercase check
+        if (password.length >= 12) {
+            score++;
+        } else {
+            tips.push("Use at least 12 characters for better security.");
+        }
+
+        if (password.length >= 16) {
+            score++;
+        } else {
+            tips.push("Consider using 16 or more characters.");
+        }
+
+        // Character variety checks
         if (/[A-Z]/.test(password)) {
             score++;
         } else {
-            tips.push("Add an uppercase letter (A-Z).");
+            tips.push("Add uppercase letters (A-Z).");
         }
 
-        // Lowercase check
         if (/[a-z]/.test(password)) {
             score++;
         } else {
-            tips.push("Add a lowercase letter (a-z).");
+            tips.push("Add lowercase letters (a-z).");
         }
 
-        // Number check
         if (/[0-9]/.test(password)) {
             score++;
         } else {
-            tips.push("Add a number (0-9).");
+            tips.push("Add numbers (0-9).");
         }
 
-        // Special character check
         if (/[^A-Za-z0-9]/.test(password)) {
             score++;
         } else {
-            tips.push("Add a special character, such as @ or #.");
+            tips.push("Add special characters such as @, # or !.");
         }
 
-        let strength;
-        let percentage = (score / 5) * 100;
-        let meterColor = "#ef4444";
+        // Predictability check
+        const predictable = isPredictable(password);
 
-        if (password.length === 0) {
-            strength = "Please enter a password.";
-            percentage = 0;
-            tips.length = 0;
-        } else if (score <= 2) {
+        if (predictable) {
+            score = 0;
+            tips.unshift(
+                "This password contains a common password or predictable pattern. Choose a less predictable password."
+            );
+        }
+
+        // Determine strength
+        let strength;
+        let meterColor;
+        let percentage;
+
+        if (predictable || password.length < 8 || score <= 2) {
             strength = "Weak";
             meterColor = "#ef4444";
-        } else if (score <= 4) {
-            strength = "Medium";
-            meterColor = "#facc15";
-        } else {
+            percentage = 25;
+        } else if (password.length >= 14 && score >= 6) {
             strength = "Strong";
             meterColor = "#22c55e";
+            percentage = 100;
+        } else {
+            strength = "Medium";
+            meterColor = "#facc15";
+            percentage = 60;
+
+            tips.unshift(
+                "Improve your password length and variety to make it stronger."
+            );
         }
 
         // Display result
-        result.textContent = password.length === 0
-            ? strength
-            : "Strength: " + strength;
-
+        result.textContent = "Strength: " + strength;
         result.style.color = meterColor;
 
         // Update strength meter
@@ -115,19 +196,17 @@ document.addEventListener("DOMContentLoaded", function () {
         strengthFill.style.backgroundColor = meterColor;
         strengthBar.setAttribute("aria-valuenow", String(percentage));
 
-        // Update suggestions
+        // Display suggestions
         suggestions.replaceChildren();
 
-        if (password.length === 0) {
-            addSuggestion("Enter a sample password to see suggestions.");
-        } else if (tips.length === 0) {
-            addSuggestion("All five checks passed!");
+        if (strength === "Strong") {
+            addSuggestion("Good job! Your password passed these basic checks.");
         } else {
-            tips.forEach(addSuggestion);
+            [...new Set(tips)].forEach(addSuggestion);
         }
     });
 
-    // Safely add a suggestion to the list
+    // Safely add suggestions
     function addSuggestion(message) {
         const item = document.createElement("li");
         item.textContent = message;
